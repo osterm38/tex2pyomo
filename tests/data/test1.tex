@@ -1,0 +1,33 @@
+% This is a simple doc containing a partial paper with a mathematical
+% optimization formulation to pull out using our code
+\documentclass{article}
+% includes?
+
+\begin{document}
+
+\section{Intro}
+Foo foo.
+
+\section{Model}
+Here be models.
+
+\begin{tabular}{c|c|c} \label{tab:set}
+    Set & Domain & Description \\
+    \hline
+    $I$ & & Constraint index set \\
+    $J$ & & Var index set \\
+    $K$ & $J^I$ & Index subset for each constraint \\
+\end{tabular}
+    
+\begin{tabular}{c|c|c} \label{tab:param}
+    Param & Domain & Description \\
+    \hline
+    $b$ & $\Re^I_+$ & Constraint rhs \\
+    $c$ & $\Re^J_+$ & Var coefficients \\
+    $A$ & $\Re^{I \times J}$ & Constraint matrix coefficients \\
+\end{tabular}
+        
+\section{Conclusion}
+Bar bar.
+
+\end{document}
