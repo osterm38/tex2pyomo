@@ -1,98 +1,152 @@
+from curses.ascii import HT
+from bs4 import BeautifulSoup
 from collections import OrderedDict
-import os
+from dataclasses import dataclass
 import pandas as pd
 import pathlib
+import subprocess
 from TexSoup import TexSoup
 
-def read_file(path, suffix=None):
-    # given a path to a file, return its stringified contents
-    path = pathlib.Path(path)
-    assert path.is_file(), f'oops, {path=} is not (already) a file (cwd = {pathlib.Path.cwd()}'
-    if suffix is not None:
-        assert path.suffix == suffix, f'oops, {path.suffix=} is required to be {suffix=}'
-    with open(path, mode='r') as fh:
-        res = fh.read()
-    return res
+class FileParser(object):
+    def __init__(self, suffix=None):
+        self.suffix = suffix
+    
+    def check_file(self, path):
+        # given a path to an (arbitrarily suffixed) file, check it exists, return pathlibified path
+        path = pathlib.Path(path)
+        assert path.is_file(), f'oops, {path=} is not (already) a file (cwd = {pathlib.Path.cwd()}'
+        if self.suffix is not None:
+            assert path.suffix == self.suffix, f'oops, {path.suffix=} is required to be {self.suffix=}'
+        return path
+            
+    def read_file(self, path):
+        # given a path to an (arbitrarily suffixed) file, check it and return its stringified contents
+        path = self.check_file(path)
+        with open(path, mode='r') as fh:
+            res = fh.read()
+        return res
 
-# tex
+class FileSoupifier(FileParser):
+    def __init__(self, suffix=None, SoupClass=None, soup_kwargs=None):
+        # suffix = suffix if suffix == '.tex' else '.html'
+        super(FileSoupifier, self).__init__(suffix=suffix)
+        # self.SoupClass = TexSoup if suffix == '.tex' else BeautifulSoup
+        # TODO: assert something like SoupClass exists in this scope?
+        self.SoupClass = SoupClass
+        self.soup_kwargs = dict() if soup_kwargs is None else soup_kwargs
 
-def read_tex(path):
-    # given a path to a LaTeX file, return its soupified contents
-    res = read_file(path, suffix='.tex')
-    soup = TexSoup(res)
-    return soup
+    def soupify(self, path):
+        # given string contents (res) of file, return soupified version
+        res = self.read_file(path)
+        return self.SoupClass(res, **self.soup_kwargs)
+    
+    def read_dfs(self, path):
+        dct = OrderedDict()
+        soup = self.soupify(path)
+        tables = self.find_tables(soup)
+        for i, table in enumerate(tables):
+            # form label
+            label = self.get_table_id(table)
+            if label is None:
+                label = f'Table{i}'
+            assert label not in dct, f'oops, {label=} should not be duplicated in tabular labels'
+            # form df
+            df = self.table_to_df(table)
+            dct[label] = df
+        return dct
+    
+    def find_tables(self, soup):
+        # given soupified contents, return list of soupified tables (tabulars) found
+        return soup.find_all('table')
+    
+    def get_table_id(self, table):
+        # given soupified table, determine an id of the table
+        return None
+    
+    def table_to_df(self, table):
+        # given soupified table, return dataframified table
+        return pd.DataFrame()
+        
+    
+class TexSoupifier(FileSoupifier):
+    def __init__(self):
+        super(TexSoupifier, self).__init__(
+            suffix='.tex',
+            SoupClass=TexSoup,
+        )
 
-def get_tex_tables(soup):
-    tables = soup.find_all('tabular')
-    dct = OrderedDict()
-    for i, t in enumerate(tables):
-        # print('***', i, t)
-        label = str(t.label.string)
-        # print(f'{label=}')
-        name = label if label is not None else f'Table{i}'
-        assert name not in dct, f'oops, {name=} should not be duplicated in tabular labels'
-        dct[name] = t
-    return dct
+    def find_tables(self, soup):
+        # given soupified contents, return list of soupified tables (tabulars) found
+        return soup.find_all('tabular')
+    
+    def get_table_id(self, table):
+        # given soupified table, determine an id of the table
+        return str(table.label.string)
+    
+    # def table_to_df(self, table):
+    #     return ??? # TODO: update
+    
 
-def read_tex_tables(path):
-    res = read_tex(path)
-    dct = get_tex_tables(res)
-    return dct
+class HtmlSoupifier(FileSoupifier):
+    def __init__(self):
+        super(HtmlSoupifier, self).__init__(
+            suffix='.html', 
+            SoupClass=BeautifulSoup,
+            soup_kwargs={
+                'parser': 'html.parser',
+                'features': 'lxml',
+            }
+        )
+    
+    def table_to_df(self, table):
+        dfs = pd.read_html(str(table))
+        assert len(dfs) == 1, f"oops, table should only be soup with 1 table, found {len(table)}:\n{table=}"
+        df = dfs[0]
+        return df
 
-# html
 
-def read_html_tables(path):
-    # given a path to a file, returns its tables dataframe-ified
-    return pd.read_html(path)
-
-# converters
-
-def tex_to_html(path, overwrite=False, suffix='.tex'):
+def html_from_tex(tex_path, overwrite=False):
     # given a path to a tex file, use pandoc+mathjax to convert it to html
     # and return resulting file's path
-    path = pathlib.Path(path)
-    assert path.is_file(), f'oops, {path=} is not (already) a file (cwd = {pathlib.Path.cwd()}'
-    if suffix is not None:
-        assert path.suffix == suffix, f'oops, {path.suffix=} is required to be {suffix=}'
-    # with open(path, mode='r') as fh:
-    #     res = fh.read()
-    res_path = pathlib.Path(str(path).replace(path.suffix, '.html'))
-    if res_path.is_file():
+    tex = TexSoupifier()
+    html = HtmlSoupifier()
+    source = tex.check_file(tex_path)
+    output = pathlib.Path(str(source).replace(tex.suffix, html.suffix))
+    # TODO: perform check if pandoc exists; if not, exit this and return error, else continue
+    test_cmd = 'pandoc -v'
+    cmd = f'pandoc -s {source} -o {output} --mathjax'
+    if output.is_file():
         if overwrite:
-            print(f'WARNING: overwriting {res_path=}')
-            # TODO: check that pandoc is installed?
-            os.system(f'pandoc -v && pandoc -s {path} -o {res_path} --mathjax')
+            print(f'WARNING: overwriting {output=}')
+            subprocess.run(test_cmd)
+            subprocess.run(cmd)
         else:
             pass # not overwriting since it doesn't yet exist
     else:
-        # TODO: system call: pandoc -s test1.tex -o test1.html --mathjax        
-        os.system(f'pandoc -v && pandoc -s {path} -o {res_path} --mathjax')
-    assert res_path.is_file(), f'oops, {res_path=} is not (already) a file (cwd = {pathlib.Path.cwd()}'
-    return res_path
+        subprocess.run(test_cmd)
+        subprocess.run(cmd)
+    output = html.check_file(output)
+    return output
+
 
 def main():
     # mainly used to preliminary prints/testing of other package/my package's functionality
     HERE = pathlib.Path(__file__).parent
-    f = HERE.parent.parent / 'tests' / 'data' / 'test1.tex'
-    print(f'{f=}')
-    # soup = read_tex(f)
-    tex_tables = read_tex_tables(f)
-    if f.suffix == '.tex':
-        dct = {}
-        f = tex_to_html(f) # silently skipped if html exists
-        print(f'{f=}')
-        dfs = read_html_tables(f)
-        # WARNING: assumes tex_tables ordered same as dfs (and same len?)
-        assert len(tex_tables) == len(dfs)
-        for i, ((label, table), df) in enumerate(zip(tex_tables.items(), dfs)):
-            dct[label] = df
-            # anything else needed from table?
-            # print('***', i)
-            # print(label)
-            # print(df)
-            # print(table)
-        print(len(dct), dct.keys())
-    
+    tex = HERE.parent.parent / 'tests' / 'data' / 'test1.tex'
+    print(f'{tex=}')
+    # read dfs directly from tex
+    tex_dfs = TexSoupifier().read_dfs(tex)
+    for i, df in tex_dfs.items():
+        print('***', i)
+        print(df)
+    html = html_from_tex(tex)
+    print(f'{html=}')
+    # read dfs directly from html
+    html_dfs = HtmlSoupifier().read_dfs(html)
+    for i, df in html_dfs.items():
+        print('***', i)
+        print(df)
+
     
 if __name__ == "__main__":
     main()
