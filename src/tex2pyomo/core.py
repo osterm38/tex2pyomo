@@ -5,6 +5,7 @@ from dataclasses import dataclass
 import pandas as pd
 import pathlib
 import subprocess
+import sympy
 from TexSoup import TexSoup
 
 class FileParser(object):
@@ -113,8 +114,8 @@ def html_from_tex(tex_path, overwrite=False):
     source = tex.check_file(tex_path)
     output = pathlib.Path(str(source).replace(tex.suffix, html.suffix))
     # TODO: perform check if pandoc exists; if not, exit this and return error, else continue
-    test_cmd = 'pandoc -v'
-    cmd = f'pandoc -s {source} -o {output} --mathjax'
+    test_cmd = ['pandoc', '-v']
+    cmd = ['pandoc', '-s', str(source), '-o', str(output), '--mathjax']
     if output.is_file():
         if overwrite:
             print(f'WARNING: overwriting {output=}')
@@ -129,24 +130,50 @@ def html_from_tex(tex_path, overwrite=False):
     return output
 
 
-def main():
+def read_dfs(path):
+    # given a file of ext either .tex or .html, return map of id to tables dataframed
+    # if html, do as is, but if tex, use tex for ids and revert to html for dfs
+    path = pathlib.Path(path)
+    if path.suffix == '.tex':
+        # use .tex read_dfs only to get ordered list of \labels
+        tex = path
+        _dfs = TexSoupifier().read_dfs(tex)
+        names = _dfs.keys()
+        # then generate html if not already in existence
+        html = html_from_tex(tex)
+    else:
+        names = None
+        html = path
+    # either way use html to gather actual dfs, but rename if taken tex as input earlier
+    dfs = HtmlSoupifier().read_dfs(html)
+    if names is not None:
+        assert len(names) == len(dfs)
+        dfs = {k: df for k, (_, df) in zip(names, dfs.items())}
+    return dfs
+
+
+def main_tex():
     # mainly used to preliminary prints/testing of other package/my package's functionality
     HERE = pathlib.Path(__file__).parent
-    tex = HERE.parent.parent / 'tests' / 'data' / 'test1.tex'
-    print(f'{tex=}')
-    # read dfs directly from tex
-    tex_dfs = TexSoupifier().read_dfs(tex)
-    for i, df in tex_dfs.items():
+    path = HERE.parent.parent / 'tests' / 'data' / 'test1.tex'
+    print(f'{path=}')
+    dfs = read_dfs(path)
+    for i, df in dfs.items():
         print('***', i)
         print(df)
-    html = html_from_tex(tex)
-    print(f'{html=}')
-    # read dfs directly from html
-    html_dfs = HtmlSoupifier().read_dfs(html)
-    for i, df in html_dfs.items():
+        
+def main_html():
+    # mainly used to preliminary prints/testing of other package/my package's functionality
+    HERE = pathlib.Path(__file__).parent
+    path = HERE.parent.parent / 'tests' / 'data' / 'test1.html'
+    print(f'{path=}')
+    dfs = read_dfs(path)
+    for i, df in dfs.items():
         print('***', i)
         print(df)
-
+        
+def main():
+    pass
     
 if __name__ == "__main__":
-    main()
+    main_tex()
