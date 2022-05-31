@@ -11,6 +11,7 @@ Foo foo.
 \section{Model}
 Here be models.
 
+Some sets.
 \begin{tabular}{c|c|c} \label{tab:set}
     Set & Domain & Description \\
     \hline
@@ -18,7 +19,8 @@ Here be models.
     $J$ & & Var index set \\
     $K$ & $J^I$ & Index subset for each constraint \\
 \end{tabular}
-    
+
+Some params.
 \begin{tabular}{c|c|c} \label{tab:param}
     Param & Domain & Description \\
     \hline
@@ -26,7 +28,30 @@ Here be models.
     $c$ & $\Re^J_+$ & Var coefficients \\
     $A$ & $\Re^{I \times J}$ & Constraint matrix coefficients \\
 \end{tabular}
-        
+
+Some vars.
+\begin{tabular}{c|c|c} \label{tab:var}
+    Var & Domain & Description \\
+    \hline
+    $x$ & $\{0, 1\}^J$ & Decision vars \\
+\end{tabular}
+
+Some objectives.
+\begin{tabular}{c|c|c} \label{tab:objective}
+    Objective & Sense & Rule \\
+    \hline
+    $obj1$ & $\min$ & $c^Tx$ \\
+    $obj2$ & $\min$ & $\sum_{j \in J} c_j x_j$ \\
+\end{tabular}
+
+Some constraints.
+\begin{tabular}{c|c|c} \label{tab:constraint}
+    Constraint & Index & Rule \\
+    \hline
+    $cons1$ & $I$ & $Ax \geq b$ \\
+    $cons2$ & $I$ & $\sum_{j \in J} A_{ij} x_j \geq b_i$ \\
+\end{tabular}
+
 \section{Conclusion}
 Bar bar.
 

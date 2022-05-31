@@ -1,11 +1,96 @@
-from curses.ascii import HT
+"""Here's what I want:
+
+Input is a tex file, written up as if to submit to a math opt journal,
+with minimal formatting for ingestion to this kind of tool:
+
+Output is a py file, which contains my mathematical model encoded in pyomo
+objects, so that I can simply point it to data, or embed it in a larger
+solve/iteration (i.e. a function which returns my model)
+
+The main function should
+- read in the input tex file, containing a number of tables to parse
+  - specify subsection or keyword to filter by to only get the 5-ish tables we want???
+- tex -> html -> {name: df}
+- reformat each df's math as sympy
+  - may need to generalize some of sympy to work with latex parser??
+- map df/sympy to pyomo object
+- write out the output file, containing a py function returning our encoded model
+
+examples:
+
+NOTE: need latex substitutions (for sympy parsing) as well as sympy mapping (for pyomo formulation)
+latex substitutions just prior to sympy parsing:
+- _+ -> _{\\nonneg} or _{\\pos}
+- \Re -> Re (OK, ie. automatic at this point)
+- _{j \in J} -> _{j = 1}^{|J|} or _{j = J}^J??
+- _{ij} -> -{\ij} // weird how ij -> i*j in index
+
+sympy->pyomo
+
+# Set (Name, Index, Domain, Descripion) #
+
+A set I:
+- latex : $I$ & & & blah
+- pandas: '\(I\)'
+- sympy : Symbol('I')
+- pyomo : I = Set()
+
+A set K, indexed by i in I, with each K_i being a subset of J:
+- latex : $K$ & $I$ & $J$ & blah
+- pandas: '\(K\)'...
+- sympy : Symbol('K')...
+- pyomo : K = Set(I, within=J)
+
+# Param (Name, Index, Domain, Description) #
+
+A non-negative vector c, indexed by j in J
+- latex : $c$ & $J$ & $\Re_+$ & blah // NOTE: _+ not allowed, use _{\pos} or _{\\nonneg}?
+- pandas: '\(c\)'...
+- sympy : Symbol('c'), Symbol('J'), Symbol('Re_{pos}')???
+- pyomo : c = Param(J, within=NonNegativeReals)
+
+A matrix A, indexed by i in I, j in J
+- latex : $A$ & $I \times J$ & $\Re$ & blah
+- pandas: '\(A\)'...
+- sympy : Symbol('c'), Mul(Symbol('I'), Symbol('J')), Symbol('Re')
+- pyomo : A = Param(I, J, within=Reals)
+
+# Var (Name, Index, Domain, Description) #
+
+A binary decision variable vector x, indexed by j in J
+- latex : $x$ & $J$ & $\{0, 1\}$ & blah
+- pandas: '\(x\)'...
+- sympy : Symbol('x'), Symbol('J'), Symbol('Binary')???
+- pyomo : x = Var(J, within=Binary)
+
+# Objective (Name, Sense, Rule, Description) #
+
+Only objective function:
+- latex : $z$ & $\min$ & $\sum_{j \in J} c_j x_j
+- pandas: '\(min\)'...
+- sympy : Symbol('min'), 
+   Sum(Mul(Symbol('c_{j}'), Symbol('x_{j}')), Tuple(Symbol('j'), Integer(1), Abs(Symbol('J'))))
+   or Sum(Mul(Symbol('c_{j}'), Symbol('x_{j}')), Tuple(Symbol('j'), Symbol('J'), Symbol('J')))"
+- pyomo : z = Objective(sense=minimize, rule=rule)
+   def z_rule(m): return sum(m.c[j]*m.x[j] for j in m.J)
+
+# Constraint (Name, Index, Rule, Description) #
+
+row constraint:
+- latex : $cons$ & $I$ & $\sum_{j \in J} A_{ij} x_j \geq b_i
+- pandas: '\(cons\)'
+- sympy : Symbol('cons'), 
+   "GreaterThan(Sum(Mul(Symbol('A_{ij}'), Symbol('x_{j}')), Tuple(Symbol('j'), Integer(1), Abs(Symbol('J')))), Symbol('b_{i}'))"
+- pyomo : cons = Constraint(I, rule=rule)
+   def cons_rule(m, i): return sum(m.A[i, j]*m.x[j] for j in m.J) >= m.b[i]
+
+"""
 from bs4 import BeautifulSoup
 from collections import OrderedDict
-from dataclasses import dataclass
 import pandas as pd
 import pathlib
 import subprocess
-import sympy
+from sympy.parsing.latex import parse_latex
 from TexSoup import TexSoup
 
 class FileParser(object):
@@ -173,7 +258,26 @@ def main_html():
         print(df)
         
 def main():
-    pass
+    # .tex -> df -> sympy? -> pyomo
+    #
+    # # Set
+    # $I$ -> '\(I\)' -> I = pyo.Set()
+    # $J$ -> '\(J\)' -> J = pyo.Set()
+    # $K \in J^I$ -> '\(K\)' -> K = pyo.Set(I, within=J)
+    #
+    # # Param
+    # $b \in \Re^I_+$ -> '\(b\)' -> b = pyo.Param(I, within=\Re_+) // \Re_+ = pyo.NonNegativeReals
+    # $c \in \Re^J_+$ -> '\(c\)' -> c = pyo.Param(J, within=\Re_+) // \Re_+ = pyo.NonNegativeReals
+    # $A \in \Re^{I \times J}$ -> '\(A\)' -> A = pyo.Param(I, J, within=\Re)
+    #
+    # # Var
+    
+    
+    tex = "\\(x^2 + a * y^2 + \\delta\\)"
+    print(f'{tex=}')
+    expr = parse_latex(tex)
+    print(expr.)
+    # print(f'{s=}')
     
 if __name__ == "__main__":
     main_tex()
