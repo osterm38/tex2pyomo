@@ -93,6 +93,7 @@ import subprocess
 from sympy.parsing.latex import parse_latex
 from TexSoup import TexSoup
 
+
 class FileParser(object):
     def __init__(self, suffix=None):
         self.suffix = suffix
@@ -111,6 +112,7 @@ class FileParser(object):
         with open(path, mode='r') as fh:
             res = fh.read()
         return res
+
 
 class FileSoupifier(FileParser):
     def __init__(self, suffix=None, SoupClass=None, soup_kwargs=None):
@@ -138,6 +140,8 @@ class FileSoupifier(FileParser):
             assert label not in dct, f'oops, {label=} should not be duplicated in tabular labels'
             # form df
             df = self.table_to_df(table)
+            print(f'*** {i} {label}')
+            print(df)
             dct[label] = df
         return dct
     
@@ -167,11 +171,26 @@ class TexSoupifier(FileSoupifier):
     
     def get_table_id(self, table):
         # given soupified table, determine an id of the table
-        return str(table.label.string)
+        if table.label is not None:
+            return str(table.label.string)
+        else:
+            return super(TexSoupifier, self).get_table_id(table)
     
-    # def table_to_df(self, table):
-    #     return ??? # TODO: update
-    
+    def table_to_df(self, table):
+        # return super(TexSoupifier, self).table_to_df(table)
+        # convert to html using pandoc without writing to file all right here
+        test_cmd = ['pandoc', '-v']
+        subprocess.run(test_cmd, capture_output=True)
+        cmd = ['pandoc', '-f', 'latex', '-t', 'html', '--mathjax']
+        res = subprocess.run(
+            cmd,
+            stdout=subprocess.PIPE,
+            text=True,
+            input=str(table),
+        )
+        df = HtmlSoupifier().table_to_df(res.stdout)
+        return df
+        
 
 class HtmlSoupifier(FileSoupifier):
     def __init__(self):
@@ -204,37 +223,38 @@ def html_from_tex(tex_path, overwrite=False):
     if output.is_file():
         if overwrite:
             print(f'WARNING: overwriting {output=}')
-            subprocess.run(test_cmd)
+            subprocess.run(test_cmd, capture_output=True)
             subprocess.run(cmd)
         else:
             pass # not overwriting since it doesn't yet exist
     else:
-        subprocess.run(test_cmd)
+        subprocess.run(test_cmd, capture_output=True)
         subprocess.run(cmd)
     output = html.check_file(output)
     return output
 
 
-def read_dfs(path):
-    # given a file of ext either .tex or .html, return map of id to tables dataframed
-    # if html, do as is, but if tex, use tex for ids and revert to html for dfs
-    path = pathlib.Path(path)
-    if path.suffix == '.tex':
-        # use .tex read_dfs only to get ordered list of \labels
-        tex = path
-        _dfs = TexSoupifier().read_dfs(tex)
-        names = _dfs.keys()
-        # then generate html if not already in existence
-        html = html_from_tex(tex)
-    else:
-        names = None
-        html = path
-    # either way use html to gather actual dfs, but rename if taken tex as input earlier
-    dfs = HtmlSoupifier().read_dfs(html)
-    if names is not None:
-        assert len(names) == len(dfs)
-        dfs = {k: df for k, (_, df) in zip(names, dfs.items())}
-    return dfs
+# NOT QUITE RIGHT, as texsoup doesn't seem to return tabulars in same order as html!?
+# def read_dfs(path):
+#     # given a file of ext either .tex or .html, return map of id to tables dataframed
+#     # if html, do as is, but if tex, use tex for ids and revert to html for dfs
+#     path = pathlib.Path(path)
+#     if path.suffix == '.tex':
+#         # use .tex read_dfs only to get ordered list of \labels
+#         tex = path
+#         _dfs = TexSoupifier().read_dfs(tex)
+#         # names = _dfs.keys()
+#         # then generate html if not already in existence
+#         html = html_from_tex(tex, overwrite=False)
+#     else:
+#         _dfs = None
+#         html = path
+#     # either way use html to gather actual dfs, but rename if taken tex as input earlier
+#     dfs = HtmlSoupifier().read_dfs(html)
+#     if _dfs is not None:
+#         assert len(_dfs) == len(dfs)
+#         dfs = {k: df for (k, _), (_, df) in zip(_dfs.items(), dfs.items())}
+#     return dfs
 
 
 def main_tex():
@@ -242,42 +262,22 @@ def main_tex():
     HERE = pathlib.Path(__file__).parent
     path = HERE.parent.parent / 'tests' / 'data' / 'test1.tex'
     print(f'{path=}')
-    dfs = read_dfs(path)
-    for i, df in dfs.items():
-        print('***', i)
-        print(df)
-        
+    dfs = TexSoupifier().read_dfs(path)
+    # for i, df in dfs.items():
+    #     print('***', i)
+    #     print(df)
+  
+      
 def main_html():
     # mainly used to preliminary prints/testing of other package/my package's functionality
     HERE = pathlib.Path(__file__).parent
     path = HERE.parent.parent / 'tests' / 'data' / 'test1.html'
     print(f'{path=}')
-    dfs = read_dfs(path)
+    dfs = HtmlSoupifier().read_dfs(path)
     for i, df in dfs.items():
         print('***', i)
         print(df)
-        
-def main():
-    # .tex -> df -> sympy? -> pyomo
-    #
-    # # Set
-    # $I$ -> '\(I\)' -> I = pyo.Set()
-    # $J$ -> '\(J\)' -> J = pyo.Set()
-    # $K \in J^I$ -> '\(K\)' -> K = pyo.Set(I, within=J)
-    #
-    # # Param
-    # $b \in \Re^I_+$ -> '\(b\)' -> b = pyo.Param(I, within=\Re_+) // \Re_+ = pyo.NonNegativeReals
-    # $c \in \Re^J_+$ -> '\(c\)' -> c = pyo.Param(J, within=\Re_+) // \Re_+ = pyo.NonNegativeReals
-    # $A \in \Re^{I \times J}$ -> '\(A\)' -> A = pyo.Param(I, J, within=\Re)
-    #
-    # # Var
-    
-    
-    tex = "\\(x^2 + a * y^2 + \\delta\\)"
-    print(f'{tex=}')
-    expr = parse_latex(tex)
-    print(expr.)
-    # print(f'{s=}')
-    
+
+
 if __name__ == "__main__":
     main_tex()

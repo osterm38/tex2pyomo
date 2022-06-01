@@ -11,13 +11,50 @@ Foo foo.
 \section{Model}
 Here be models.
 
+Not opt related.
+\begin{center}
+    \begin{tabular}{||c c c c||} 
+     \hline
+     Col1 & Col2 & Col2 & Col3 \\ [0.5ex] 
+     \hline\hline
+     1 & 6 & 87837 & 787 \\ 
+     \hline
+     2 & 7 & 78 & 5415 \\
+     \hline
+     3 & 545 & 778 & 7507 \\
+     \hline
+     4 & 545 & 18744 & 7560 \\
+     \hline
+     5 & 88 & 788 & 6344 \\ [1ex] 
+     \hline
+    \end{tabular}
+\end{center}
+
+Referenced non-opt related.
+\begin{table}[h!]
+    \centering
+    \begin{tabular}{||c c c c||} 
+     \hline
+     Col1 & Col2 & Col2 & Col3 \\ [0.5ex] 
+     \hline\hline
+     1 & 6 & 87837 & 787 \\ 
+     2 & 7 & 78 & 5415 \\
+     3 & 545 & 778 & 7507 \\
+     4 & 545 & 18744 & 7560 \\
+     5 & 88 & 788 & 6344 \\ [1ex] 
+     \hline
+    \end{tabular}
+    \caption{Table to test captions and labels.}
+    \label{table:1}
+\end{table}
+
 Some sets.
-\begin{tabular}{c|c|c} \label{tab:set}
-    Set & Domain & Description \\
+\begin{tabular}{c|c|c|c} \label{tab:set}
+    Name & Index & Domain & Description \\
     \hline
-    $I$ & & Constraint index set \\
-    $J$ & & Var index set \\
-    $K$ & $J^I$ & Index subset for each constraint \\
+    $I$ & & & Constraint index set \\
+    $J$ & & & Var index set \\
+    $K$ & $I$ & $J$ & Index subset for each constraint \\
 \end{tabular}
 
 Some params.

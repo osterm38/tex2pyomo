@@ -165,10 +165,103 @@
 <p>Foo foo.</p>
 <h1 id="model">Model</h1>
 <p>Here be models.</p>
+<p>Not opt related.</p>
+<div class="center">
 <table>
 <thead>
 <tr class="header">
-<th style="text-align: center;">Set</th>
+<th style="text-align: center;">Col1</th>
+<th style="text-align: center;">Col2</th>
+<th style="text-align: center;">Col2</th>
+<th style="text-align: center;">Col3</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">6</td>
+<td style="text-align: center;">87837</td>
+<td style="text-align: center;">787</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">2</td>
+<td style="text-align: center;">7</td>
+<td style="text-align: center;">78</td>
+<td style="text-align: center;">5415</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;">3</td>
+<td style="text-align: center;">545</td>
+<td style="text-align: center;">778</td>
+<td style="text-align: center;">7507</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">4</td>
+<td style="text-align: center;">545</td>
+<td style="text-align: center;">18744</td>
+<td style="text-align: center;">7560</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;">5</td>
+<td style="text-align: center;">88</td>
+<td style="text-align: center;">788</td>
+<td style="text-align: center;">6344</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Referenced non-opt related.</p>
+<div id="table:1">
+<table>
+<caption>Table to test captions and labels.</caption>
+<thead>
+<tr class="header">
+<th style="text-align: center;">Col1</th>
+<th style="text-align: center;">Col2</th>
+<th style="text-align: center;">Col2</th>
+<th style="text-align: center;">Col3</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">6</td>
+<td style="text-align: center;">87837</td>
+<td style="text-align: center;">787</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">2</td>
+<td style="text-align: center;">7</td>
+<td style="text-align: center;">78</td>
+<td style="text-align: center;">5415</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;">3</td>
+<td style="text-align: center;">545</td>
+<td style="text-align: center;">778</td>
+<td style="text-align: center;">7507</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">4</td>
+<td style="text-align: center;">545</td>
+<td style="text-align: center;">18744</td>
+<td style="text-align: center;">7560</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;">5</td>
+<td style="text-align: center;">88</td>
+<td style="text-align: center;">788</td>
+<td style="text-align: center;">6344</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Some sets.</p>
+<table>
+<thead>
+<tr class="header">
+<th style="text-align: center;">Name</th>
+<th style="text-align: center;">Index</th>
 <th style="text-align: center;">Domain</th>
 <th style="text-align: center;">Description</th>
 </tr>
@@ -178,11 +271,13 @@
 <td style="text-align: center;"><span
 class="math inline">\(I\)</span></td>
 <td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
 <td style="text-align: center;">Constraint index set</td>
 </tr>
 <tr class="even">
 <td style="text-align: center;"><span
 class="math inline">\(J\)</span></td>
+<td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;">Var index set</td>
 </tr>
@@ -190,11 +285,14 @@ class="math inline">\(J\)</span></td>
 <td style="text-align: center;"><span
 class="math inline">\(K\)</span></td>
 <td style="text-align: center;"><span
-class="math inline">\(J^I\)</span></td>
+class="math inline">\(I\)</span></td>
+<td style="text-align: center;"><span
+class="math inline">\(J\)</span></td>
 <td style="text-align: center;">Index subset for each constraint</td>
 </tr>
 </tbody>
 </table>
+<p>Some params.</p>
 <table>
 <thead>
 <tr class="header">
@@ -224,6 +322,81 @@ class="math inline">\(A\)</span></td>
 <td style="text-align: center;"><span class="math inline">\(\Re^{I
 \times J}\)</span></td>
 <td style="text-align: center;">Constraint matrix coefficients</td>
+</tr>
+</tbody>
+</table>
+<p>Some vars.</p>
+<table>
+<thead>
+<tr class="header">
+<th style="text-align: center;">Var</th>
+<th style="text-align: center;">Domain</th>
+<th style="text-align: center;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: center;"><span
+class="math inline">\(x\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(\{0,
+1\}^J\)</span></td>
+<td style="text-align: center;">Decision vars</td>
+</tr>
+</tbody>
+</table>
+<p>Some objectives.</p>
+<table>
+<thead>
+<tr class="header">
+<th style="text-align: center;">Objective</th>
+<th style="text-align: center;">Sense</th>
+<th style="text-align: center;">Rule</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: center;"><span
+class="math inline">\(obj1\)</span></td>
+<td style="text-align: center;"><span
+class="math inline">\(\min\)</span></td>
+<td style="text-align: center;"><span
+class="math inline">\(c^Tx\)</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: center;"><span
+class="math inline">\(obj2\)</span></td>
+<td style="text-align: center;"><span
+class="math inline">\(\min\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(\sum_{j \in
+J} c_j x_j\)</span></td>
+</tr>
+</tbody>
+</table>
+<p>Some constraints.</p>
+<table>
+<thead>
+<tr class="header">
+<th style="text-align: center;">Constraint</th>
+<th style="text-align: center;">Index</th>
+<th style="text-align: center;">Rule</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: center;"><span
+class="math inline">\(cons1\)</span></td>
+<td style="text-align: center;"><span
+class="math inline">\(I\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(Ax \geq
+b\)</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: center;"><span
+class="math inline">\(cons2\)</span></td>
+<td style="text-align: center;"><span
+class="math inline">\(I\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(\sum_{j \in
+J} A_{ij} x_j \geq b_i\)</span></td>
 </tr>
 </tbody>
 </table>
